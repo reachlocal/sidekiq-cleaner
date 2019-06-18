@@ -4,11 +4,11 @@ require 'erb'
 require 'sidekiq'
 require 'sidekiq/api'
 require 'sidekiq/paginator'
-require 'sidekiq/web/helpers'
+require 'sidekiq/cleaner/helpers'
 
-require 'sidekiq/web/router'
-require 'sidekiq/web/action'
-require 'sidekiq/web/application'
+require 'sidekiq/cleaner/router'
+require 'sidekiq/cleaner/action'
+require 'sidekiq/cleaner/application'
 
 require 'rack/protection'
 
@@ -17,8 +17,8 @@ require 'rack/file'
 require 'rack/session/cookie'
 
 module Sidekiq
-  class Web
-    ROOT = File.expand_path("#{File.dirname(__FILE__)}/../../web")
+  class Cleaner
+    ROOT = File.expand_path("#{File.dirname(__FILE__)}/../../cleaner")
     VIEWS = "#{ROOT}/views"
     LOCALES = ["#{ROOT}/locales"]
     LAYOUT = "#{VIEWS}/layout.erb"
@@ -31,6 +31,7 @@ module Sidekiq
       "Retries"   => 'retries',
       "Scheduled" => 'scheduled',
       "Dead"      => 'morgue',
+      "Cleaner"   => 'errors'
     }
 
     class << self
@@ -71,7 +72,7 @@ module Sidekiq
         opts.each {|key| set(key, false) }
       end
 
-      # Helper for the Sinatra syntax: Sidekiq::Web.set(:session_secret, Rails.application.secrets...)
+      # Helper for the Sinatra syntax: Sidekiq::Cleaner.set(:session_secret, Rails.application.secrets...)
       def set(attribute, value)
         send(:"#{attribute}=", value)
       end
@@ -96,7 +97,7 @@ module Sidekiq
     end
 
     def middlewares
-      @middlewares ||= Web.middlewares.dup
+      @middlewares ||= Cleaner.middlewares.dup
     end
 
     def call(env)
@@ -161,7 +162,7 @@ module Sidekiq
       return unless s
 
       unless using? ::Rack::Session::Cookie
-        unless secret = Web.session_secret
+        unless secret = Cleaner.session_secret
           require 'securerandom'
           secret = SecureRandom.hex(64)
         end
@@ -196,7 +197,7 @@ module Sidekiq
   Sidekiq::WebApplication.helpers WebHelpers
   Sidekiq::WebApplication.helpers Sidekiq::Paginator
 
-  Sidekiq::WebAction.class_eval "def _render\n#{ERB.new(File.read(Web::LAYOUT)).src}\nend"
+  Sidekiq::WebAction.class_eval "def _render\n#{ERB.new(File.read(Cleaner::LAYOUT)).src}\nend"
 end
 
 if defined?(::ActionDispatch::Request::Session) &&

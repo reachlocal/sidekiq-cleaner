@@ -1,15 +1,15 @@
 # encoding: utf-8
 # frozen_string_literal: true
 require_relative 'helper'
-require 'sidekiq/web'
+require 'sidekiq/cleaner'
 require 'sidekiq/util'
 require 'rack/test'
 
-describe Sidekiq::Web do
+describe Sidekiq::Cleaner do
   include Rack::Test::Methods
 
   def app
-    Sidekiq::Web
+    Sidekiq::Cleaner
   end
 
   def job_params(job, score)
@@ -19,7 +19,7 @@ describe Sidekiq::Web do
   before do
     ENV["RACK_ENV"] = "test"
     Sidekiq.redis {|c| c.flushdb }
-    Sidekiq::Web.middlewares.clear
+    Sidekiq::Cleaner.middlewares.clear
   end
 
   class WebWorker
@@ -382,13 +382,13 @@ describe Sidekiq::Web do
 
   it 'can show user defined tab' do
     begin
-      Sidekiq::Web.tabs['Custom Tab'] = '/custom'
+      Sidekiq::Cleaner.tabs['Custom Tab'] = '/custom'
 
       get '/'
       assert_match 'Custom Tab', last_response.body
 
     ensure
-      Sidekiq::Web.tabs.delete 'Custom Tab'
+      Sidekiq::Cleaner.tabs.delete 'Custom Tab'
     end
   end
 
@@ -399,8 +399,8 @@ describe Sidekiq::Web do
 
   describe 'custom locales' do
     before do
-      Sidekiq::Web.settings.locales << File.join(File.dirname(__FILE__), "fixtures")
-      Sidekiq::Web.tabs['Custom Tab'] = '/custom'
+      Sidekiq::Cleaner.settings.locales << File.join(File.dirname(__FILE__), "fixtures")
+      Sidekiq::Cleaner.tabs['Custom Tab'] = '/custom'
       Sidekiq::WebApplication.get('/custom') do
         clear_caches # ugly hack since I can't figure out how to access WebHelpers outside of this context
         t('translated_text')
@@ -408,8 +408,8 @@ describe Sidekiq::Web do
     end
 
     after do
-      Sidekiq::Web.tabs.delete 'Custom Tab'
-      Sidekiq::Web.settings.locales.pop
+      Sidekiq::Cleaner.tabs.delete 'Custom Tab'
+      Sidekiq::Cleaner.settings.locales.pop
     end
 
     it 'can show user defined tab with custom locales' do
@@ -645,7 +645,7 @@ describe Sidekiq::Web do
     include Rack::Test::Methods
 
     def app
-      app = Sidekiq::Web.new
+      app = Sidekiq::Cleaner.new
       app.use(Rack::Auth::Basic) { |user, pass| user == "a" && pass == "b" }
 
       app
@@ -671,7 +671,7 @@ describe Sidekiq::Web do
     include Rack::Test::Methods
 
     def app
-      app = Sidekiq::Web.new
+      app = Sidekiq::Cleaner.new
       app.use Rack::Session::Cookie, secret: 'v3rys3cr31', host: 'nicehost.org'
       app
     end
@@ -690,7 +690,7 @@ describe Sidekiq::Web do
 
       describe 'using #disable' do
         def app
-          app = Sidekiq::Web.new
+          app = Sidekiq::Cleaner.new
           app.disable(:sessions)
           app
         end
@@ -703,7 +703,7 @@ describe Sidekiq::Web do
 
       describe 'using #set with false argument' do
         def app
-          app = Sidekiq::Web.new
+          app = Sidekiq::Cleaner.new
           app.set(:sessions, false)
           app
         end
@@ -716,7 +716,7 @@ describe Sidekiq::Web do
 
       describe 'using #set with an hash' do
         def app
-          app = Sidekiq::Web.new
+          app = Sidekiq::Cleaner.new
           app.set(:sessions, { domain: :all })
           app
         end
@@ -731,7 +731,7 @@ describe Sidekiq::Web do
 
       describe 'using #enable' do
         def app
-          app = Sidekiq::Web.new
+          app = Sidekiq::Cleaner.new
           app.enable(:sessions)
           app
         end

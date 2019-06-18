@@ -32,11 +32,11 @@ module Sidekiq
     end
 
     def self.settings
-      Sidekiq::Web.settings
+      Sidekiq::Cleaner.settings
     end
 
     def self.tabs
-      Sidekiq::Web.tabs
+      Sidekiq::Cleaner.tabs
     end
 
     def self.set(key, val)
@@ -121,6 +121,38 @@ module Sidekiq
       else
         erb(:dead)
       end
+    end
+
+    get "/errors" do
+      @group_by_exception = Sidekiq::DeadSet.new.group_by do |exception|
+        exception['error_class']
+      end
+
+      @group_by_class = Sidekiq::DeadSet.new.group_by do |exception|
+        exception['wrapped']
+      end
+
+      erb(:errors)
+    end
+
+    post "/errors/retry" do
+      jobs_to_retry = Sidekiq::DeadSet.new.each do |hash|
+        if (hash['wrapped'] == params['retry_error_class']) || (hash['error_class'] == params['retry_error_exception'])
+          hash.retry
+        end
+      end
+
+      redirect_with_query("#{root_path}morgue")
+    end
+
+    post "/errors/delete" do
+      jobs_to_delete = Sidekiq::DeadSet.new.each do |hash|
+        if (hash['wrapped'] == params['delete_error_class']) || (hash['error_class'] == params['delete_error_exception'])
+          hash.delete
+        end
+      end
+
+      redirect_with_query("#{root_path}morgue")
     end
 
     post '/morgue' do

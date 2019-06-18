@@ -1,4 +1,4 @@
-# Easiest way to run Sidekiq::Web.
+# Easiest way to run Sidekiq::Cleaner.
 # Run with "bundle exec rackup simple.ru"
 
 require 'sidekiq'
@@ -10,5 +10,5 @@ end
 
 Sidekiq::Client.push('class' => "HardWorker", 'args' => [])
 
-require 'sidekiq/web'
-run Sidekiq::Web
+require 'sidekiq/cleaner'
+run Sidekiq::Cleaner

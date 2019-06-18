@@ -1,4 +1,4 @@
-require 'sidekiq/web'
+require 'sidekiq/cleaner'
 require 'redis'
 
 $redis = Redis.new
@@ -11,4 +11,4 @@ class SinatraWorker
   end
 end
 
-run Sidekiq::Web
+run Sidekiq::Cleaner

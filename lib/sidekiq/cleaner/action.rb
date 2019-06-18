@@ -7,7 +7,7 @@ module Sidekiq
     attr_accessor :env, :block, :type
 
     def settings
-      Web.settings
+      Cleaner.settings
     end
 
     def request
@@ -42,7 +42,7 @@ module Sidekiq
     def erb(content, options = {})
       if content.kind_of? Symbol
         unless respond_to?(:"_erb_#{content}")
-          src = ERB.new(File.read("#{Web.settings.views}/#{content}.erb")).src
+          src = ERB.new(File.read("#{Cleaner.settings.views}/#{content}.erb")).src
           WebAction.class_eval("def _erb_#{content}\n#{src}\n end")
         end
       end

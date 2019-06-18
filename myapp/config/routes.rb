@@ -1,8 +1,8 @@
-require 'sidekiq/web'
-Sidekiq::Web.app_url = '/'
+require 'sidekiq/cleaner'
+Sidekiq::Cleaner.app_url = '/'
 
 Rails.application.routes.draw do
-  mount Sidekiq::Web => '/sidekiq'
+  mount Sidekiq::Cleaner => '/cleaner'
   get "work" => "work#index"
   get "work/email" => "work#email"
   get "work/post" => "work#delayed_post"
