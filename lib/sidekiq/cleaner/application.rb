@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Sidekiq
-  class WebApplication
+  class CleanerApplication
     extend WebRouter
 
     CONTENT_LENGTH = "Content-Length"

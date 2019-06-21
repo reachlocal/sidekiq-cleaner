@@ -401,7 +401,7 @@ describe Sidekiq::Cleaner do
     before do
       Sidekiq::Cleaner.settings.locales << File.join(File.dirname(__FILE__), "fixtures")
       Sidekiq::Cleaner.tabs['Custom Tab'] = '/custom'
-      Sidekiq::WebApplication.get('/custom') do
+      Sidekiq::CleanerApplication.get('/custom') do
         clear_caches # ugly hack since I can't figure out how to access WebHelpers outside of this context
         t('translated_text')
       end

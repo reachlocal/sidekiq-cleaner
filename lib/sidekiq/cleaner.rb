@@ -140,7 +140,7 @@ module Sidekiq
     end
 
     def self.register(extension)
-      extension.registered(WebApplication)
+      extension.registered(CleanerApplication)
     end
 
     private
@@ -189,13 +189,13 @@ module Sidekiq
 
         middlewares.each {|middleware, block| use(*middleware, &block) }
 
-        run WebApplication.new(klass)
+        run CleanerApplication.new(klass)
       end
     end
   end
 
-  Sidekiq::WebApplication.helpers WebHelpers
-  Sidekiq::WebApplication.helpers Sidekiq::Paginator
+  Sidekiq::CleanerApplication.helpers WebHelpers
+  Sidekiq::CleanerApplication.helpers Sidekiq::Paginator
 
   Sidekiq::WebAction.class_eval "def _render\n#{ERB.new(File.read(Cleaner::LAYOUT)).src}\nend"
 end
