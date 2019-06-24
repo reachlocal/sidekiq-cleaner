@@ -26,13 +26,13 @@
                         <td>
                             <form action="<%= root_path %>errors/retry" method="post">
                                 <%= csrf_tag %>
-                                <input class="btn btn-danger btn-xs pull-right flip" type="submit" name="retry_error_class" value="<%= k %>" data-confirm="<%= t('AreYouSure') %>" />
+                                <input class="btn btn-danger btn-xs pull-right flip class-cleaner-retry-button" type="submit" name="retry_error_class" value="Retry" data_name="<%= k %>" />
                             </form>
                         </td>
                         <td>
                             <form action="<%= root_path %>errors/delete" method="post">
                                 <%= csrf_tag %>
-                                <input class="btn btn-danger btn-xs pull-right flip" type="submit" name="delete_error_class" value="<%= k %>" data-confirm="<%= t('AreYouSure') %>" />
+                                <input class="btn btn-danger btn-xs pull-right flip class-cleaner-delete-button" type="submit" name="delete_error_class" value="Delete" data_name="<%= k %>" />
                             </form>
                         </td>
                     </tr>
@@ -63,13 +63,13 @@
                     <td>
                         <form action="<%= root_path %>errors/retry" method="post">
                             <%= csrf_tag %>
-                            <input class="btn btn-danger btn-xs pull-right flip" type="submit" name="retry_error_exception" value="<%= k %>" data-confirm="<%= t('AreYouSure') %>" />
+                            <input class="btn btn-danger btn-xs pull-right flip exception-cleaner-retry-button" type="submit" name="retry_error_exception" value="Retry" data_name="<%= k %>" />
                         </form>
                     </td>
                     <td>
                         <form action="<%= root_path %>errors/delete" method="post">
                             <%= csrf_tag %>
-                            <input class="btn btn-danger btn-xs pull-right flip" type="submit" name="delete_error_exception" value="<%= k %>" data-confirm="<%= t('AreYouSure') %>" />
+                            <input class="btn btn-danger btn-xs pull-right flip exception-cleaner-delete-button" type="submit" name="delete_error_exception" value="Delete" data_name="<%= k %>" />
                         </form>
                     </td>
                 </tr>

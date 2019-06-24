@@ -90,3 +90,83 @@ $(function() {
     $('[data-navbar="dropdown"]').show()
   }
 });
+
+$(function() {
+  var authTokens = $('[name="authenticity_token"]');
+  var authToken = '';
+  if(authTokens) {
+    authToken = authTokens[0].value;
+  }
+
+  $('.class-cleaner-retry-button').click(function(event){
+    event.preventDefault();
+    var className = this.getAttribute('data_name');
+    $.ajax({
+      url: '/cleaner/errors/retry',
+      type: 'POST',
+      data: {
+        "retry_error_class": className
+      },
+      headers: {
+        "X-CSRF-Token": authToken
+      },
+      success: function(data, statusCode) {
+        window.location.href = '/cleaner/morgue'
+      }
+    });
+  });
+
+  $('.class-cleaner-delete-button').click(function(event){
+    event.preventDefault();
+    var className = this.getAttribute('data_name');
+    $.ajax({
+      url: '/cleaner/errors/delete',
+      type: 'POST',
+      data: {
+        "delete_error_class": className
+      },
+      headers: {
+        "X-CSRF-Token": authToken
+      },
+      success: function(data, statusCode) {
+        window.location.href = '/cleaner/morgue'
+      }
+    });
+  });
+
+  $('.exception-cleaner-retry-button').click(function(event){
+    event.preventDefault();
+    var exceptionName = this.getAttribute('data_name');
+    $.ajax({
+      url: '/cleaner/errors/retry',
+      type: 'POST',
+      data: {
+        "retry_error_exception": exceptionName
+      },
+      headers: {
+        "X-CSRF-Token": authToken
+      },
+      success: function(data, statusCode) {
+        window.location.href = '/cleaner/morgue'
+      }
+    });
+  });
+
+  $('.exception-cleaner-delete-button').click(function(event){
+    event.preventDefault();
+    var exceptionName = this.getAttribute('data_name');
+    $.ajax({
+      url: '/cleaner/errors/delete',
+      type: 'POST',
+      data: {
+        "delete_error_exception": expceptionName
+      },
+      headers: {
+        "X-CSRF-Token": authToken
+      },
+      success: function(data, statusCode) {
+        window.location.href = '/cleaner/morgue'
+      }
+    });
+  });
+});
