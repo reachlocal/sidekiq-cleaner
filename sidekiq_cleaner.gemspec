@@ -5,12 +5,12 @@ Gem::Specification.new do |gem|
   gem.email         = ["danhbelling@gmail.com"]
   gem.summary       = "A sidekiq cleaner library."
   gem.description   = "A cleaner library for the sidekiq job processor for use by the RL engineering team."
-  gem.homepage      = "https://manage.fury.io/dashboard/reachlocal/package/pkg_1Eg6Yg"
+  gem.homepage      = "https://github.com/reachlocal/sidekiq-cleaner"
   gem.license       = "LGPL-3.0"
 
   gem.executables   = ['sidekiq', 'sidekiqctl']
   gem.files         = `git ls-files | grep -Ev '^(test|myapp|examples)'`.split("\n")
-  gem.name          = "sidekiq-cleaner"
+  gem.name          = "sidekiq_cleaner"
   gem.version       = Sidekiq::VERSION
   gem.required_ruby_version = ">= 2.2.2"
 
