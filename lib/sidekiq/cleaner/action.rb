@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Sidekiq
-  class WebAction
+  class CleanerAction
     RACK_SESSION = 'rack.session'
 
     attr_accessor :env, :block, :type
@@ -32,7 +32,7 @@ module Sidekiq
     end
 
     def route_params
-      env[WebRouter::ROUTE_PARAMS]
+      env[CleanerRouter::ROUTE_PARAMS]
     end
 
     def session
@@ -43,7 +43,7 @@ module Sidekiq
       if content.kind_of? Symbol
         unless respond_to?(:"_erb_#{content}")
           src = ERB.new(File.read("#{Cleaner.settings.views}/#{content}.erb")).src
-          WebAction.class_eval("def _erb_#{content}\n#{src}\n end")
+          CleanerAction.class_eval("def _erb_#{content}\n#{src}\n end")
         end
       end
 

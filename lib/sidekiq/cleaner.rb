@@ -194,10 +194,10 @@ module Sidekiq
     end
   end
 
-  Sidekiq::CleanerApplication.helpers WebHelpers
+  Sidekiq::CleanerApplication.helpers CleanerHelpers
   Sidekiq::CleanerApplication.helpers Sidekiq::Paginator
 
-  Sidekiq::WebAction.class_eval "def _render\n#{ERB.new(File.read(Cleaner::LAYOUT)).src}\nend"
+  Sidekiq::CleanerAction.class_eval "def _render\n#{ERB.new(File.read(Cleaner::LAYOUT)).src}\nend"
 end
 
 if defined?(::ActionDispatch::Request::Session) &&

@@ -2,9 +2,9 @@
 require_relative 'helper'
 require 'sidekiq/web'
 
-class TestWebHelpers < Minitest::Test
+class TestCleanerHelpers < Minitest::Test
   class Helpers
-    include Sidekiq::WebHelpers
+    include Sidekiq::CleanerHelpers
 
     def initialize(params={})
       @thehash = default.merge(params)

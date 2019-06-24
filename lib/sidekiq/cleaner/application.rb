@@ -2,7 +2,7 @@
 
 module Sidekiq
   class CleanerApplication
-    extend WebRouter
+    extend CleanerRouter
 
     CONTENT_LENGTH = "Content-Length"
     CONTENT_TYPE = "Content-Type"
@@ -347,9 +347,9 @@ module Sidekiq
 
     def self.helpers(mod=nil, &block)
       if block_given?
-        WebAction.class_eval(&block)
+        CleanerAction.class_eval(&block)
       else
-        WebAction.send(:include, mod)
+        CleanerAction.send(:include, mod)
       end
     end
 
@@ -370,7 +370,7 @@ module Sidekiq
     end
 
     def self.run_hooks(hooks, app, action)
-      hooks.select { |p,_| !p || p =~ action.env[WebRouter::PATH_INFO] }.
+      hooks.select { |p,_| !p || p =~ action.env[CleanerRouter::PATH_INFO] }.
             each {|_,b| action.instance_exec(action.env, app, &b) }
     end
 
