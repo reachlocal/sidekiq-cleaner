@@ -1,16 +1,15 @@
 # frozen_string_literal: true
-
-require "uri"
-require "set"
-require "yaml"
-require "cgi"
+require 'uri'
+require 'set'
+require 'yaml'
+require 'cgi'
 
 module Sidekiq
   # This is not a public API
-  module WebHelpers
+  module CleanerHelpers
     def strings(lang)
-      @strings ||= {}
-      @strings[lang] ||= begin
+      @@strings ||= {}
+      @@strings[lang] ||= begin
         # Allow sidekiq-web extensions to add locale paths
         # so extensions can be localized
         settings.locales.each_with_object({}) do |path, global|
@@ -23,19 +22,19 @@ module Sidekiq
     end
 
     def clear_caches
-      @strings = nil
-      @locale_files = nil
-      @available_locales = nil
+      @@strings = nil
+      @@locale_files = nil
+      @@available_locales = nil
     end
 
     def locale_files
-      @locale_files ||= settings.locales.flat_map { |path|
+      @@locale_files ||= settings.locales.flat_map do |path|
         Dir["#{path}/*.yml"]
-      }
+      end
     end
 
     def available_locales
-      @available_locales ||= locale_files.map { |path| File.basename(path, ".yml") }.uniq
+      @@available_locales ||= locale_files.map { |path| File.basename(path, '.yml') }.uniq
     end
 
     def find_locale_files(lang)
@@ -64,35 +63,32 @@ module Sidekiq
     end
 
     def poll_path
-      if current_path != "" && params["poll"]
-        path = root_path + current_path
-        query_string = to_query_string(params.slice(*params.keys - %w[page poll]))
-        path += "?#{query_string}" unless query_string.empty?
-        path
+      if current_path != '' && params['poll']
+        root_path + current_path
       else
         ""
       end
     end
 
     def text_direction
-      get_locale["TextDirection"] || "ltr"
+      get_locale['TextDirection'] || 'ltr'
     end
 
     def rtl?
-      text_direction == "rtl"
+      text_direction == 'rtl'
     end
 
     # See https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4
     def user_preferred_languages
-      languages = env["HTTP_ACCEPT_LANGUAGE"]
-      languages.to_s.downcase.gsub(/\s+/, "").split(",").map { |language|
-        locale, quality = language.split(";q=", 2)
-        locale = nil if locale == "*" # Ignore wildcards
+      languages = env['HTTP_ACCEPT_LANGUAGE']
+      languages.to_s.downcase.gsub(/\s+/, '').split(',').map do |language|
+        locale, quality = language.split(';q=', 2)
+        locale  = nil if locale == '*' # Ignore wildcards
         quality = quality ? quality.to_f : 1.0
         [locale, quality]
-      }.sort { |(_, left), (_, right)|
+      end.sort do |(_, left), (_, right)|
         right <=> left
-      }.map(&:first).compact
+      end.map(&:first).compact
     end
 
     # Given an Accept-Language header like "fr-FR,fr;q=0.8,en-US;q=0.6,en;q=0.4,ru;q=0.2"
@@ -101,47 +97,36 @@ module Sidekiq
     # Inspiration taken from https://github.com/iain/http_accept_language/blob/master/lib/http_accept_language/parser.rb
     def locale
       @locale ||= begin
-        matched_locale = user_preferred_languages.map { |preferred|
-          preferred_language = preferred.split("-", 2).first
+        matched_locale = user_preferred_languages.map do |preferred|
+          preferred_language = preferred.split('-', 2).first
 
-          lang_group = available_locales.select { |available|
-            preferred_language == available.split("-", 2).first
-          }
+          lang_group = available_locales.select do |available|
+            preferred_language == available.split('-', 2).first
+          end
 
           lang_group.find { |lang| lang == preferred } || lang_group.min_by(&:length)
-        }.compact.first
+        end.compact.first
 
-        matched_locale || "en"
+        matched_locale || 'en'
       end
-    end
-
-    # within is used by Sidekiq Pro
-    def display_tags(job, within = nil)
-      job.tags.map { |tag|
-        "<span class='jobtag label label-info'>#{::Rack::Utils.escape_html(tag)}</span>"
-      }.join(" ")
     end
 
     # mperham/sidekiq#3243
     def unfiltered?
-      yield unless env["PATH_INFO"].start_with?("/filter/")
+      yield unless env['PATH_INFO'].start_with?("/filter/")
     end
 
     def get_locale
       strings(locale)
     end
 
-    def t(msg, options = {})
-      string = get_locale[msg] || strings("en")[msg] || msg
+    def t(msg, options={})
+      string = get_locale[msg] || strings('en')[msg] || msg
       if options.empty?
         string
       else
         string % options
       end
-    end
-
-    def sort_direction_label
-      params[:direction] == "asc" ? "&uarr;" : "&darr;"
     end
 
     def workers
@@ -154,6 +139,12 @@ module Sidekiq
 
     def stats
       @stats ||= Sidekiq::Stats.new
+    end
+
+    def retries_with_score(score)
+      Sidekiq.redis do |conn|
+        conn.zrangebyscore('retry', score, score)
+      end.map { |msg| Sidekiq.load_json(msg) }
     end
 
     def redis_connection
@@ -172,24 +163,24 @@ module Sidekiq
     end
 
     def root_path
-      "#{env["SCRIPT_NAME"]}/"
+      "#{env['SCRIPT_NAME']}/"
     end
 
     def current_path
-      @current_path ||= request.path_info.gsub(/^\//, "")
+      @current_path ||= request.path_info.gsub(/^\//,'')
     end
 
     def current_status
-      workers.size == 0 ? "idle" : "active"
+      workers.size == 0 ? 'idle' : 'active'
     end
 
     def relative_time(time)
       stamp = time.getutc.iso8601
-      %(<time class="ltr" dir="ltr" title="#{stamp}" datetime="#{stamp}">#{time}</time>)
+      %{<time class="ltr" dir="ltr" title="#{stamp}" datetime="#{stamp}">#{time}</time>}
     end
 
     def job_params(job, score)
-      "#{score}-#{job["jid"]}"
+      "#{score}-#{job['jid']}"
     end
 
     def parse_params(params)
@@ -197,7 +188,7 @@ module Sidekiq
       [score.to_f, jid]
     end
 
-    SAFE_QPARAMS = %w[page poll direction]
+    SAFE_QPARAMS = %w(page poll)
 
     # Merge options with current params, filter safe params, and stringify to query string
     def qparams(options)
@@ -206,13 +197,9 @@ module Sidekiq
         options[key.to_s] = options.delete(key)
       end
 
-      to_query_string(params.merge(options))
-    end
-
-    def to_query_string(params)
-      params.map { |key, value|
+      params.merge(options).map do |key, value|
         SAFE_QPARAMS.include?(key) ? "#{key}=#{CGI.escape(value.to_s)}" : next
-      }.compact.join("&")
+      end.compact.join("&")
     end
 
     def truncate(text, truncate_after_chars = 2000)
@@ -220,13 +207,13 @@ module Sidekiq
     end
 
     def display_args(args, truncate_after_chars = 2000)
-      return "Invalid job payload, args is nil" if args.nil?
-      return "Invalid job payload, args must be an Array, not #{args.class.name}" unless args.is_a?(Array)
+      return "Invalid job payload, args is nil" if args == nil
+      return "Invalid job payload, args must be an Array, not #{args.class.name}" if !args.is_a?(Array)
 
       begin
-        args.map { |arg|
+        args.map do |arg|
           h(truncate(to_display(arg), truncate_after_chars))
-        }.join(", ")
+        end.join(", ")
       rescue
         "Illegal job arguments: #{h args.inspect}"
       end
@@ -237,21 +224,23 @@ module Sidekiq
     end
 
     def to_display(arg)
-      arg.inspect
-    rescue
       begin
-        arg.to_s
-      rescue => ex
-        "Cannot display argument: [#{ex.class.name}] #{ex.message}"
+        arg.inspect
+      rescue
+        begin
+          arg.to_s
+        rescue => ex
+          "Cannot display argument: [#{ex.class.name}] #{ex.message}"
+        end
       end
     end
 
-    RETRY_JOB_KEYS = Set.new(%w[
+    RETRY_JOB_KEYS = Set.new(%w(
       queue class args retry_count retried_at failed_at
       jid error_message error_class backtrace
       error_backtrace enqueued_at retry wrapped
-      created_at tags
-    ])
+      created_at
+    ))
 
     def retry_extra_items(retry_job)
       @retry_extra_items ||= {}.tap do |extra|
@@ -268,8 +257,8 @@ module Sidekiq
         return number
       end
 
-      options = {delimiter: ",", separator: "."}
-      parts = number.to_s.to_str.split(".")
+      options = {delimiter: ',', separator: '.'}
+      parts = number.to_s.to_str.split('.')
       parts[0].gsub!(/(\d)(?=(\d\d\d)+(?!\d))/, "\\1#{options[:delimiter]}")
       parts.join(options[:separator])
     end
@@ -277,8 +266,8 @@ module Sidekiq
     def h(text)
       ::Rack::Utils.escape_html(text)
     rescue ArgumentError => e
-      raise unless e.message.eql?("invalid byte sequence in UTF-8")
-      text.encode!("UTF-16", "UTF-8", invalid: :replace, replace: "").encode!("UTF-8", "UTF-16")
+      raise unless e.message.eql?('invalid byte sequence in UTF-8')
+      text.encode!('UTF-16', 'UTF-8', invalid: :replace, replace: '').encode!('UTF-8', 'UTF-16')
       retry
     end
 
@@ -295,7 +284,7 @@ module Sidekiq
     end
 
     def environment_title_prefix
-      environment = Sidekiq.options[:environment] || ENV["APP_ENV"] || ENV["RAILS_ENV"] || ENV["RACK_ENV"] || "development"
+      environment = Sidekiq.options[:environment] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'development'
 
       "[#{environment.upcase}] " unless environment == "production"
     end
@@ -305,30 +294,30 @@ module Sidekiq
     end
 
     def server_utc_time
-      Time.now.utc.strftime("%H:%M:%S UTC")
+      Time.now.utc.strftime('%H:%M:%S UTC')
     end
 
     def redis_connection_and_namespace
       @redis_connection_and_namespace ||= begin
-        namespace_suffix = namespace.nil? ? "" : "##{namespace}"
+        namespace_suffix = namespace == nil ? '' : "##{namespace}"
         "#{redis_connection}#{namespace_suffix}"
       end
     end
 
     def retry_or_delete_or_kill(job, params)
-      if params["retry"]
+      if params['retry']
         job.retry
-      elsif params["delete"]
+      elsif params['delete']
         job.delete
-      elsif params["kill"]
+      elsif params['kill']
         job.kill
       end
     end
 
     def delete_or_add_queue(job, params)
-      if params["delete"]
+      if params['delete']
         job.delete
-      elsif params["add_to_queue"]
+      elsif params['add_to_queue']
         job.add_to_queue
       end
     end

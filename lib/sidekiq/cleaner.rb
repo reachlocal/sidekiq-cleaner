@@ -5,11 +5,11 @@ require "erb"
 require "sidekiq"
 require "sidekiq/api"
 require "sidekiq/paginator"
-require "sidekiq/web/helpers"
+require "sidekiq/cleaner/helpers"
 
-require "sidekiq/web/router"
-require "sidekiq/web/action"
-require "sidekiq/web/application"
+require "sidekiq/cleaner/router"
+require "sidekiq/cleaner/action"
+require "sidekiq/cleaner/application"
 
 require "rack/protection"
 

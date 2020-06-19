@@ -1,19 +1,18 @@
 # frozen_string_literal: true
-
-require "rack"
+require 'rack'
 
 module Sidekiq
-  module WebRouter
-    GET = "GET"
-    DELETE = "DELETE"
-    POST = "POST"
-    PUT = "PUT"
-    PATCH = "PATCH"
-    HEAD = "HEAD"
+  module CleanerRouter
+    GET = 'GET'
+    DELETE = 'DELETE'
+    POST = 'POST'
+    PUT = 'PUT'
+    PATCH = 'PATCH'
+    HEAD = 'HEAD'
 
-    ROUTE_PARAMS = "rack.route_params"
-    REQUEST_METHOD = "REQUEST_METHOD"
-    PATH_INFO = "PATH_INFO"
+    ROUTE_PARAMS = 'rack.route_params'
+    REQUEST_METHOD = 'REQUEST_METHOD'
+    PATH_INFO = 'PATH_INFO'
 
     def get(path, &block)
       route(GET, path, &block)
@@ -36,10 +35,10 @@ module Sidekiq
     end
 
     def route(method, path, &block)
-      @routes ||= {GET => [], POST => [], PUT => [], PATCH => [], DELETE => [], HEAD => []}
+      @routes ||= { GET => [], POST => [], PUT => [], PATCH => [], DELETE => [], HEAD => [] }
 
-      @routes[method] << WebRoute.new(method, path, block)
-      @routes[HEAD] << WebRoute.new(method, path, block) if method == GET
+      @routes[method] << CleanerRoute.new(method, path, block)
+      @routes[HEAD] << CleanerRoute.new(method, path, block) if method == GET
     end
 
     def match(env)
@@ -51,11 +50,10 @@ module Sidekiq
       path_info = "/" if path_info == ""
 
       @routes[request_method].each do |route|
-        params = route.match(request_method, path_info)
-        if params
+        if params = route.match(request_method, path_info)
           env[ROUTE_PARAMS] = params
 
-          return WebAction.new(env, route.block)
+          return CleanerAction.new(env, route.block)
         end
       end
 
@@ -63,7 +61,7 @@ module Sidekiq
     end
   end
 
-  class WebRoute
+  class CleanerRoute
     attr_accessor :request_method, :pattern, :block, :name
 
     NAMED_SEGMENTS_PATTERN = /\/([^\/]*):([^\.:$\/]+)/
@@ -79,7 +77,7 @@ module Sidekiq
     end
 
     def compile
-      if pattern.match?(NAMED_SEGMENTS_PATTERN)
+      if pattern.match(NAMED_SEGMENTS_PATTERN)
         p = pattern.gsub(NAMED_SEGMENTS_PATTERN, '/\1(?<\2>[^$/]+)')
 
         Regexp.new("\\A#{p}\\Z")
@@ -93,8 +91,9 @@ module Sidekiq
       when String
         {} if path == matcher
       else
-        path_match = path.match(matcher)
-        path_match&.named_captures&.transform_keys(&:to_sym)
+        if path_match = path.match(matcher)
+          Hash[path_match.names.map(&:to_sym).zip(path_match.captures)]
+        end
       end
     end
   end
