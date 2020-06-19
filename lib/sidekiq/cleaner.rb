@@ -18,8 +18,8 @@ require "rack/file"
 require "rack/session/cookie"
 
 module Sidekiq
-  class Web
-    ROOT = File.expand_path("#{File.dirname(__FILE__)}/../../web")
+  class Cleaner
+    ROOT = File.expand_path("#{File.dirname(__FILE__)}/../../cleaner")
     VIEWS = "#{ROOT}/views"
     LOCALES = ["#{ROOT}/locales"]
     LAYOUT = "#{VIEWS}/layout.erb"
@@ -31,7 +31,8 @@ module Sidekiq
       "Queues" => "queues",
       "Retries" => "retries",
       "Scheduled" => "scheduled",
-      "Dead" => "morgue"
+      "Dead" => "morgue", 
+      "Cleaner"   => "errors"
     }
 
     class << self
@@ -72,7 +73,7 @@ module Sidekiq
         opts.each { |key| set(key, false) }
       end
 
-      # Helper for the Sinatra syntax: Sidekiq::Web.set(:session_secret, Rails.application.secrets...)
+      # Helper for the Sinatra syntax: Sidekiq::Cleaner.set(:session_secret, Rails.application.secrets...)
       def set(attribute, value)
         send(:"#{attribute}=", value)
       end
@@ -97,7 +98,7 @@ module Sidekiq
     end
 
     def middlewares
-      @middlewares ||= Web.middlewares.dup
+      @middlewares ||= Cleaner.middlewares.dup
     end
 
     def call(env)
@@ -140,7 +141,7 @@ module Sidekiq
     end
 
     def self.register(extension)
-      extension.registered(WebApplication)
+      extension.registered(CleanerApplication)
     end
 
     private
@@ -162,7 +163,7 @@ module Sidekiq
       return unless s
 
       unless using? ::Rack::Session::Cookie
-        unless (secret = Web.session_secret)
+        unless (secret = Cleaner.session_secret)
           require "securerandom"
           secret = SecureRandom.hex(64)
         end
@@ -189,15 +190,15 @@ module Sidekiq
 
         middlewares.each { |middleware, block| use(*middleware, &block) }
 
-        run WebApplication.new(klass)
+        run CleanerApplication.new(klass)
       end
     end
   end
 
-  Sidekiq::WebApplication.helpers WebHelpers
-  Sidekiq::WebApplication.helpers Sidekiq::Paginator
+  Sidekiq::CleanerApplication.helpers CleanerHelpers
+  Sidekiq::CleanerApplication.helpers Sidekiq::Paginator
 
-  Sidekiq::WebAction.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+  Sidekiq::CleanerAction.class_eval <<-RUBY, __FILE__, __LINE__ + 1
     def _render
       #{ERB.new(File.read(Web::LAYOUT)).src}
     end
