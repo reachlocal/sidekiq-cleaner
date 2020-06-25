@@ -7,7 +7,7 @@ require "cgi"
 
 module Sidekiq
   # This is not a public API
-  module WebHelpers
+  module CleanerHelpers
     def strings(lang)
       @strings ||= {}
       @strings[lang] ||= begin

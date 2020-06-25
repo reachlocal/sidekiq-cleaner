@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 module Sidekiq
-  class WebApplication
-    extend WebRouter
+  class CleanerApplication
+    extend CleanerRouter
 
     CONTENT_LENGTH = "Content-Length"
     REDIS_KEYS = %w[redis_version uptime_in_days connected_clients used_memory_human used_memory_peak_human]
@@ -31,11 +31,11 @@ module Sidekiq
     end
 
     def self.settings
-      Sidekiq::Web.settings
+      Sidekiq::Cleaner.settings
     end
 
     def self.tabs
-      Sidekiq::Web.tabs
+      Sidekiq::Cleaner.tabs
     end
 
     def self.set(key, val)
@@ -286,6 +286,38 @@ module Sidekiq
       json Sidekiq::Stats::Queues.new.lengths
     end
 
+    get "/errors" do
+      @group_by_exception = Sidekiq::DeadSet.new.group_by do |exception|
+        exception['error_class']
+      end
+
+      @group_by_class = Sidekiq::DeadSet.new.group_by do |exception|
+        exception['wrapped']
+      end
+
+      erb(:errors)
+    end
+
+    post "/errors/retry" do
+      jobs_to_retry = Sidekiq::DeadSet.new.each do |hash|
+        if (hash['wrapped'] == params['retry_error_class']) || (hash['error_class'] == params['retry_error_exception'])
+          hash.retry
+        end
+      end
+
+      redirect_with_query("#{root_path}morgue")
+    end
+
+    post "/errors/delete" do
+      jobs_to_delete = Sidekiq::DeadSet.new.each do |hash|
+        if (hash['wrapped'] == params['delete_error_class']) || (hash['error_class'] == params['delete_error_exception'])
+          hash.delete
+        end
+      end
+
+      redirect_with_query("#{root_path}morgue")
+    end
+
     def call(env)
       action = self.class.match(env)
       return [404, {"Content-Type" => "text/plain", "X-Cascade" => "pass"}, ["Not Found"]] unless action
@@ -319,9 +351,9 @@ module Sidekiq
 
     def self.helpers(mod = nil, &block)
       if block_given?
-        WebAction.class_eval(&block)
+        CleanerAction.class_eval(&block)
       else
-        WebAction.send(:include, mod)
+        CleanerAction.send(:include, mod)
       end
     end
 
@@ -342,7 +374,7 @@ module Sidekiq
     end
 
     def self.run_hooks(hooks, app, action)
-      hooks.select { |p, _| !p || p =~ action.env[WebRouter::PATH_INFO] }
+      hooks.select { |p, _| !p || p =~ action.env[CleanerRouter::PATH_INFO] }
         .each { |_, b| action.instance_exec(action.env, app, &b) }
     end
 

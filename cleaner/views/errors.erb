@@ -1,0 +1,84 @@
+<header class="row">
+  <div class="col-sm-5">
+    <h3><%= t('Errors') %></h3>
+  </div>
+</header>
+
+<% if @group_by_class.size > 0 && @group_by_exception.size > 0 %>
+    <h2>Group by Class</h2>
+    <div>
+        <%= csrf_tag %>
+        <div class="table_container">
+        <table class="table table-striped table-bordered table-white">
+            <thead>
+            <tr>
+              <th><%= t('Class') %></th>
+              <th><%= t('Failed') %></th>
+              <th><%= t('RetryAll') %></th>
+              <th><%= t('DeleteAll') %></th>
+            </tr>
+            </thead>
+            <tbody>
+                <% @group_by_class.each do |k, v| %>
+                    <tr> 
+                        <td> <%= k %> </td>
+                        <td> <%= v.count %> </td>
+                        <td>
+                            <form action="<%= root_path %>errors/retry" method="post">
+                                <%= csrf_tag %>
+                                <input class="btn btn-danger btn-xs pull-right flip class-cleaner-retry-button" type="submit" name="retry_error_class" value="Retry" data_name="<%= k %>" />
+                            </form>
+                        </td>
+                        <td>
+                            <form action="<%= root_path %>errors/delete" method="post">
+                                <%= csrf_tag %>
+                                <input class="btn btn-danger btn-xs pull-right flip class-cleaner-delete-button" type="submit" name="delete_error_class" value="Delete" data_name="<%= k %>" />
+                            </form>
+                        </td>
+                    </tr>
+                <% end %>
+            </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h2>Group by Exception</h2>
+    <div>
+        <%= csrf_tag %>
+        <div class="table_container">
+        <table class="table table-striped table-bordered table-white">
+          <thead>
+            <tr>
+              <th><%= t('Exception') %></th>
+              <th><%= t('Failed') %></th>
+              <th><%= t('RetryAll') %></th>
+              <th><%= t('DeleteAll') %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @group_by_exception.each do |k, v| %>
+                <tr> 
+                    <td> <%= k %> </td>
+                    <td> <%= v.count %> </td>
+                    <td>
+                        <form action="<%= root_path %>errors/retry" method="post">
+                            <%= csrf_tag %>
+                            <input class="btn btn-danger btn-xs pull-right flip exception-cleaner-retry-button" type="submit" name="retry_error_exception" value="Retry" data_name="<%= k %>" />
+                        </form>
+                    </td>
+                    <td>
+                        <form action="<%= root_path %>errors/delete" method="post">
+                            <%= csrf_tag %>
+                            <input class="btn btn-danger btn-xs pull-right flip exception-cleaner-delete-button" type="submit" name="delete_error_exception" value="Delete" data_name="<%= k %>" />
+                        </form>
+                    </td>
+                </tr>
+            <% end %>
+        </tbody>
+        </table>
+      </div>
+    </div>
+
+<% else %>
+  <div class="alert alert-success"><%= t('NoDeadJobsFound') %></div>
+<% end %>

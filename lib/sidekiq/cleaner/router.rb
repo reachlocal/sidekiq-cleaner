@@ -3,7 +3,7 @@
 require "rack"
 
 module Sidekiq
-  module WebRouter
+  module CleanerRouter
     GET = "GET"
     DELETE = "DELETE"
     POST = "POST"
@@ -38,8 +38,8 @@ module Sidekiq
     def route(method, path, &block)
       @routes ||= {GET => [], POST => [], PUT => [], PATCH => [], DELETE => [], HEAD => []}
 
-      @routes[method] << WebRoute.new(method, path, block)
-      @routes[HEAD] << WebRoute.new(method, path, block) if method == GET
+      @routes[method] << CleanerRoute.new(method, path, block)
+      @routes[HEAD] << CleanerRoute.new(method, path, block) if method == GET
     end
 
     def match(env)
@@ -55,7 +55,7 @@ module Sidekiq
         if params
           env[ROUTE_PARAMS] = params
 
-          return WebAction.new(env, route.block)
+          return CleanerAction.new(env, route.block)
         end
       end
 
@@ -63,7 +63,7 @@ module Sidekiq
     end
   end
 
-  class WebRoute
+  class CleanerRoute
     attr_accessor :request_method, :pattern, :block, :name
 
     NAMED_SEGMENTS_PATTERN = /\/([^\/]*):([^\.:$\/]+)/

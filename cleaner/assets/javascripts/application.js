@@ -93,3 +93,186 @@ $(function() {
     $('[data-navbar="dropdown"]').show()
   }
 });
+
+    get "/errors" do
+      @group_by_exception = Sidekiq::DeadSet.new.group_by do |exception|
+        exception['error_class']
+      end
+
+      @group_by_class = Sidekiq::DeadSet.new.group_by do |exception|
+        exception['wrapped']
+      end
+
+      erb(:errors)
+    end
+
+    post "/errors/retry" do
+      jobs_to_retry = Sidekiq::DeadSet.new.each do |hash|
+        if (hash['wrapped'] == params['retry_error_class']) || (hash['error_class'] == params['retry_error_exception'])
+          hash.retry
+        end
+      end
+
+      redirect_with_query("#{root_path}morgue")
+    end
+
+    post "/errors/delete" do
+      jobs_to_delete = Sidekiq::DeadSet.new.each do |hash|
+        if (hash['wrapped'] == params['delete_error_class']) || (hash['error_class'] == params['delete_error_exception'])
+          hash.delete
+        end
+      end
+
+      redirect_with_query("#{root_path}morgue")
+    end
+
+    $(function() {
+      var authTokens = $('[name="authenticity_token"]');
+      var authToken = '';
+      var nestedRoot = window.location.pathname.split('/');
+      if(authTokens[0]) {
+        authToken = authTokens[0].value;
+      }
+    
+      $('.class-cleaner-retry-button').click(function(event){
+        event.preventDefault();
+        var className = this.getAttribute('data_name');
+        if (nestedRoot.length >= 2 && nestedRoot !== '') {
+          var initialPath = nestedRoot[1]
+          $.ajax({
+            url: `/${initialPath}/cleaner/errors/retry`,
+            type: 'POST',
+            data: {
+              "retry_error_class": className
+            },
+            headers: {
+              "X-CSRF-Token": authToken
+            },
+            success: function(data, statusCode) {
+              window.location.href = `/${initialPath}/cleaner/morgue`
+            }
+          });
+        } else {
+          $.ajax({
+            url: '/cleaner/errors/retry',
+            type: 'POST',
+            data: {
+              "retry_error_class": className
+            },
+            headers: {
+              "X-CSRF-Token": authToken
+            },
+            success: function(data, statusCode) {
+              window.location.href = '/cleaner/morgue'
+            }
+          });
+        }
+      });
+    
+      $('.class-cleaner-delete-button').click(function(event){
+        event.preventDefault();
+        var className = this.getAttribute('data_name');
+        if (nestedRoot.length >= 2 && nestedRoot !== '') {
+          var initialPath = nestedRoot[1]
+          $.ajax({
+            url: `/${initialPath}/cleaner/errors/delete`,
+            type: 'POST',
+            data: {
+              "delete_error_class": className
+            },
+            headers: {
+              "X-CSRF-Token": authToken
+            },
+            success: function(data, statusCode) {
+              window.location.href = `/${initialPath}/cleaner/morgue`
+            }
+          });
+        } else {
+          $.ajax({
+            url: '/cleaner/errors/delete',
+            type: 'POST',
+            data: {
+              "delete_error_class": className
+            },
+            headers: {
+              "X-CSRF-Token": authToken
+            },
+            success: function(data, statusCode) {
+              window.location.href = '/cleaner/morgue'
+            }
+          });
+        }
+      });
+    
+      $('.exception-cleaner-retry-button').click(function(event){
+        event.preventDefault();
+        var exceptionName = this.getAttribute('data_name');
+        if (nestedRoot.length >= 2 && nestedRoot !== '') {
+          var initialPath = nestedRoot[1];
+          $.ajax({
+            url: `/${initialPath}/cleaner/errors/retry`,
+            type: 'POST',
+            data: {
+              "authenticity_token": authToken,
+              "retry_error_exception": exceptionName
+            },
+            headers: {
+              "X-CSRF-Token": authToken
+            },
+            success: function(data, statusCode) {
+              window.location.href = `/${initialPath}/cleaner/morgue`
+            }
+          });
+        } else {
+          $.ajax({
+            url: '/cleaner/errors/retry',
+            type: 'POST',
+            data: {
+              "retry_error_exception": exceptionName
+            },
+            headers: {
+              "X-CSRF-Token": authToken
+            },
+            success: function(data, statusCode) {
+              window.location.href = '/cleaner/morgue'
+            }
+          });
+        }
+      });
+    
+      $('.exception-cleaner-delete-button').click(function(event){
+        event.preventDefault();
+        var exceptionName = this.getAttribute('data_name');
+        if (nestedRoot.length >= 2 && nestedRoot !== '') {
+          var initialPath = nestedRoot[1];
+          $.ajax({
+            url: `/${initialPath}/cleaner/errors/delete`,
+            type: 'POST',
+            data: {
+              "delete_error_exception": expceptionName
+            },
+            headers: {
+              "X-CSRF-Token": authToken
+            },
+            success: function(data, statusCode) {
+              window.location.href = `/${initialPath}/cleaner/morgue`
+            }
+          });
+        } else {
+          $.ajax({
+            url: '/cleaner/errors/delete',
+            type: 'POST',
+            data: {
+              "delete_error_exception": expceptionName
+            },
+            headers: {
+              "X-CSRF-Token": authToken
+            },
+            success: function(data, statusCode) {
+              window.location.href = '/cleaner/morgue'
+            }
+          });
+        }
+      });
+    });
+    
