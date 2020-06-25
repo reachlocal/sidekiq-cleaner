@@ -292,7 +292,7 @@ module Sidekiq
       end
 
       @group_by_class = Sidekiq::DeadSet.new.group_by do |exception|
-        exception['wrapped']
+        exception['class']
       end
 
       erb(:errors)
