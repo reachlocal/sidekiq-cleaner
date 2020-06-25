@@ -1,97 +1,60 @@
-Sidekiq
+(ReachLocal) Sidekiq Cleaner
 ==============
 
-[![Gem Version](https://badge.fury.io/rb/sidekiq.svg)](https://rubygems.org/gems/sidekiq)
-[![Code Climate](https://codeclimate.com/github/mperham/sidekiq.svg)](https://codeclimate.com/github/mperham/sidekiq)
-[![Test Coverage](https://codeclimate.com/github/mperham/sidekiq/badges/coverage.svg)](https://codeclimate.com/github/mperham/sidekiq/coverage)
-[![Build Status](https://circleci.com/gh/mperham/sidekiq/tree/master.svg?style=svg)](https://circleci.com/gh/mperham/sidekiq/tree/master)
-[![Gitter Chat](https://badges.gitter.im/mperham/sidekiq.svg)](https://gitter.im/mperham/sidekiq)
+For additional documentation, see the [Sidekiq repository](https://github.com/mperham/sidekiq)
 
-
-Simple, efficient background processing for Ruby.
-
-Sidekiq uses threads to handle many jobs at the same time in the
-same process.  It does not require Rails but will integrate tightly with
-Rails to make background processing dead simple.
-
-Performance
----------------
-
-Version |	Latency | Garbage created for 10k jobs	| Time to process 100k jobs |	Throughput | Ruby
------------------|------|---------|---------|------------------------|-----
-Sidekiq 6.0.2    | 3 ms	| 156 MB  | 14.0 sec| **7100 jobs/sec** | MRI 2.6.3
-Sidekiq 6.0.0    | 3 ms	| 156 MB  | 19 sec  | 5200 jobs/sec | MRI 2.6.3
-Sidekiq 4.0.0    | 10 ms	| 151 MB  | 22 sec  | 4500 jobs/sec |
-Sidekiq 3.5.1    | 22 ms	| 1257 MB | 125 sec | 800 jobs/sec |
-Resque 1.25.2    |  -	  | -       | 420 sec | 240 jobs/sec |
-DelayedJob 4.1.1 |  -   | -       | 465 sec | 215 jobs/sec |
-
-This benchmark can be found in `bin/sidekiqload` and assumes a Redis network latency of 1ms.
-
-Requirements
+Motivation
 -----------------
+Sidekiq is a very performant library for handling background processing of jobs, but could use with an improved UI for managing job statuses. The Capture team, found ourselves utilizing the [resque-cleaner]() gem frequently to manage our job processing, and felt that this should be included in the Sidekiq library. What is included here is a fork of the Sidekiq library with some tweaks to the `Web` rails engine under a new `Cleaner` namespace.
 
-- Redis: 4.0+
-- Ruby: MRI 2.5+ or JRuby 9.2+.
-
-Sidekiq 6.0 supports Rails 5.0+ but does not require it.
-
+Re-creating this gem from a newer version of Sidekiq
+-----------------
+https://confluence.gannett.com/display/LIQAP/Sidekiq+Cleaner+Gem
 
 Installation
 -----------------
 
-    gem install sidekiq
+    gem install sidekiq-cleaner
 
-
-Getting Started
+Usage
 -----------------
+Mount the Cleaner engine in the `config/routes.rb` file like so:
 
-See the [Getting Started wiki page](https://github.com/mperham/sidekiq/wiki/Getting-Started) and follow the simple setup process.
-You can watch [this Youtube playlist](https://www.youtube.com/playlist?list=PLjeHh2LSCFrWGT5uVjUuFKAcrcj5kSai1) to learn all about
-Sidekiq and see its features in action.  Here's the Web UI:
+```ruby
+Rails.application.routes.draw do
+  mount Sidekiq::Cleaner => '/cleaner'
+end
+```
 
-![Web UI](https://github.com/mperham/sidekiq/raw/master/examples/web-ui.png)
+The web UI should appear familiar to users of the Sidekiq job library - the only difference is that a new Cleaner tab is introduced:
 
+![cleaner.png](./cleaner.png)
 
-Want to Upgrade?
--------------------
+This tab introduces a useful UI for managing job failures (as filtered by class and exception) en masse - which was only supported for one-off retries and deletes in the vanilla library. Perhaps a future release of Sidekiq will improve on this functionality!
 
-I also sell Sidekiq Pro and Sidekiq Enterprise, extensions to Sidekiq which provide more
-features, a commercial-friendly license and allow you to support high
-quality open source development all at the same time.  Please see the
-[Sidekiq](https://sidekiq.org/) homepage for more detail.
-
-Subscribe to the **[quarterly newsletter](https://tinyletter.com/sidekiq)** to stay informed about the latest
-features and changes to Sidekiq and its bigger siblings.
-
-
-Problems?
------------------
-
-**Please do not directly email any Sidekiq committers with questions or problems.**  A community is best served when discussions are held in public.
-
-If you have a problem, please review the [FAQ](https://github.com/mperham/sidekiq/wiki/FAQ) and [Troubleshooting](https://github.com/mperham/sidekiq/wiki/Problems-and-Troubleshooting) wiki pages.
-Searching the [issues](https://github.com/mperham/sidekiq/issues) for your problem is also a good idea.
-
-Sidekiq Pro and Sidekiq Enterprise customers get private email support.  You can purchase at https://sidekiq.org; email support@contribsys.com for help.
+![cleaner-stats.png](./cleaner-stats.png)
 
 Useful resources:
 
 * Product documentation is in the [wiki](https://github.com/mperham/sidekiq/wiki).
-* Occasional announcements are made to the [@sidekiq](https://twitter.com/sidekiq) Twitter account.
+* Release announcements are made to the [@sidekiq](https://twitter.com/sidekiq) Twitter account.
 * The [Sidekiq tag](https://stackoverflow.com/questions/tagged/sidekiq) on Stack Overflow has lots of useful Q &amp; A.
 
-Every Friday morning is Sidekiq happy hour: I video chat and answer questions.
-See the [Sidekiq support page](https://sidekiq.org/support.html) for details.
+Thanks
+-----------------
+
+Sidekiq stays fast by using the [JProfiler java profiler](http://www.ej-technologies.com/products/jprofiler/overview.html) to find and fix
+performance problems on JRuby.  Unfortunately MRI does not have good multithreaded profiling tools.
 
 
 License
 -----------------
 
-Please see [LICENSE](https://github.com/mperham/sidekiq/blob/master/LICENSE) for licensing details.
+MIT
 
 
 Author
 -----------------
 
-Mike Perham, [@mperham@mastodon.xyz](https://mastodon.xyz/@mperham) / [@sidekiq](https://twitter.com/sidekiq), [https://www.mikeperham.com](https://www.mikeperham.com) / [https://www.contribsys.com](https://www.contribsys.com)
+Dan Belling, [danhbelling@gmail.com](mailto:danhbelling@gmail.com), [http://www.danbelling.me](http://danbelling.me)
+
